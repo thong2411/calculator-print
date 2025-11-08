@@ -13,27 +13,31 @@ import threading
 import json
 import os
 
-
+#lớp setup hình nút
 class CircleButton(Button):
+    #khởi tạo với biến keyword args(truyền mọi giá trị vào lớp cha)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        #set up background
         self.background_normal = ''
         self.background_down = ''
         self.background_color = (0, 0, 0, 0)
+        #setup nút
         with self.canvas.before:
             self.color_circle = Color(0.9, 0.9, 0.9, 1)
             self.circle = Ellipse(pos=self.pos, size=self.size)
         self.bind(pos=self._update_circle, size=self._update_circle)
-
+    #hàm co dãn linh hoạt nút
     def _update_circle(self, *args):
         self.circle.pos = self.pos
         self.circle.size = self.size
-
+    #hàm setup màu
     def set_circle_color(self, rgba):
         self.color_circle.rgba = rgba
 
-
+#khởi tạo lớp cha tổng bộ app
 class CalculatorApp(App):
+    #build app
     def build(self):
         self.title = 'Máy Tính'
         self.history = []
@@ -44,14 +48,14 @@ class CalculatorApp(App):
         
         # Load cấu hình đã lưu hoặc dùng mặc định
         self.load_printer_config()
-
+        #setup khung và hình của app
         main_layout = BoxLayout(orientation='vertical', padding=[10, 10, 10, 10], spacing=10)
         with main_layout.canvas.before:
             Color(1, 1, 1, 1)
             self.bg = Rectangle(size=main_layout.size, pos=main_layout.pos)
         main_layout.bind(size=self._update_bg, pos=self._update_bg)
 
-        # --- Lịch sử ---
+        #Tạo label lịch sử
         history_scroll = ScrollView(size_hint_y=0.25, do_scroll_x=False, bar_width=10)
         self.history_label = Label(
             text='Lịch sử tính toán:',
@@ -67,7 +71,8 @@ class CalculatorApp(App):
         self.history_label.bind(texture_size=lambda i, v: setattr(i, 'height', v[1]))
         history_scroll.add_widget(self.history_label)
 
-        # --- Biểu thức & kết quả ---
+        #biểu thức và kết quả
+        #biểu thức
         self.expression_label = Label(
             text='',
             size_hint_y=0.07,
@@ -77,7 +82,7 @@ class CalculatorApp(App):
             color=(0.5, 0.5, 0.5, 1)
         )
         self.expression_label.bind(size=self.expression_label.setter('text_size'))
-
+        #kết quả
         self.display = Label(
             text='0',
             size_hint_y=0.11,
@@ -89,20 +94,20 @@ class CalculatorApp(App):
         )
         self.display.bind(size=self.display.setter('text_size'))
 
-        # --- Layout nút ---
+        #setup laout của nút
         buttons_layout = GridLayout(
             cols=4,
             spacing=[10, 10],
             padding=[5, 5, 5, 5],
             size_hint_y=0.57
         )
-
+        #khởi tạo nút
         buttons = [
             ['7', '8', '9', '/'],
             ['4', '5', '6', '*'],
             ['1', '2', '3', '-'],
             ['AC', '0', '=', '+'],
-            ['🖨', '.', '⌫', '🗑']
+            ['In', '.', 'C', 'DH']
         ]
 
         for row in buttons:
@@ -120,15 +125,15 @@ class CalculatorApp(App):
                 )
 
                 # Màu sắc đặc biệt
-                if button_text == '🖨':
+                if button_text == 'In':
                     btn.set_circle_color((0.2, 0.6, 1, 1))
                 elif button_text == 'AC':
                     btn.set_circle_color((1, 0.3, 0.3, 1))
                 elif button_text == '=':
                     btn.set_circle_color((0.2, 0.8, 0.2, 1))
-                elif button_text == '⌫':
+                elif button_text == 'C':
                     btn.set_circle_color((1, 0.6, 0.2, 1))
-                elif button_text == '🗑':
+                elif button_text == 'DH':
                     btn.set_circle_color((0.9, 0.4, 0.7, 1))
                 else:
                     btn.set_circle_color((0.85, 0.85, 0.85, 1))
@@ -136,21 +141,23 @@ class CalculatorApp(App):
                 btn.bind(on_press=self.on_button_press)
                 buttons_layout.add_widget(btn)
 
-        # --- Thêm vào giao diện ---
+        #thêm tất cả bố cục vào giao diện
         main_layout.add_widget(history_scroll)
         main_layout.add_widget(self.expression_label)
         main_layout.add_widget(self.display)
         main_layout.add_widget(buttons_layout)
         return main_layout
-
+    #hàm load cấu hình máy in
     def load_printer_config(self):
-        """Load cấu hình máy in từ file"""
         try:
+            #Đọc file để lấy cấu hình của máy in
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r') as f:
                     config = json.load(f)
+                    #lấy giá trị theo dạng {"ip: "số IP", "port":"số port" "}
                     self.printer_ip = config.get('ip', '192.168.1.100')
                     self.printer_port = config.get('port', 9100)
+            #nếu file không tồn tại mặc định lấy giá trị dưới
             else:
                 # Giá trị mặc định
                 self.printer_ip = '192.168.1.100'
@@ -158,9 +165,8 @@ class CalculatorApp(App):
         except:
             self.printer_ip = '192.168.1.100'
             self.printer_port = 9100
-
+    #hàm lưu cấu hình IP và PORT vào file json
     def save_printer_config(self):
-        """Lưu cấu hình máy in vào file"""
         try:
             config = {
                 'ip': self.printer_ip,
@@ -170,22 +176,24 @@ class CalculatorApp(App):
                 json.dump(config, f)
         except Exception as e:
             print(f"Không thể lưu cấu hình: {e}")
-
+    #set up BG
     def _update_bg(self, instance, value):
         self.bg.pos = instance.pos
         self.bg.size = instance.size
-
+    #setup nút khi nhấn
     def on_button_press(self, instance):
         button_text = instance.text
         current_display = self.display.text
-
+        #logic khi ấn từng nút
+        """Ấn AC sẽ lưu vào lịch sử"""
         if button_text == 'AC':
             self.display.text = '0'
             self.expression_label.text = ''
             self.history = []
             self.update_history_display()
-
+        
         elif button_text == '=':
+            """ấn dấu bằng sẽ tính ra kết quả"""
             try:
                 result = eval(current_display)
                 calculation = f"{current_display} = {result}"
@@ -197,10 +205,10 @@ class CalculatorApp(App):
                 self.display.text = 'Lỗi'
                 self.expression_label.text = ''
 
-        elif button_text == '🖨':
+        elif button_text == 'In':
             self.print_history()
 
-        elif button_text == '⌫':
+        elif button_text == 'C':
             if current_display != '0' and current_display != 'Lỗi':
                 if len(current_display) > 1:
                     self.display.text = current_display[:-1]
@@ -209,7 +217,7 @@ class CalculatorApp(App):
                     self.display.text = '0'
                     self.expression_label.text = ''
 
-        elif button_text == '🗑':
+        elif button_text == 'DH':
             if self.history:
                 self.history.pop()
                 self.update_history_display()
