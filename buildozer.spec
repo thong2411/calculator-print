@@ -14,7 +14,7 @@ source.dir = .
 
 # (list) Source files to include
 source.include_exts = py,png,jpg,kv,atlas,json
-
+source.main = calcu.py
 # (str) Application versioning
 version = 1.0
 
